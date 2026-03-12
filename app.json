@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "SiasatACS",
+    "slug": "SiasatACS",
+    "scheme": "siasatacs",
+    "version": "1.0.0",
+    "icon": "./assets/images/splash-icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8FAFC"
+    },
+    "android": {
+      "package": "com.acs.siasat",
+      "adaptiveIcon": {
+        "backgroundColor": "#F8FAFC"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 250,
+          "resizeMode": "contain",
+          "backgroundColor": "#0F172A"
+        }
+      ]
+    ]
+  }
+}
