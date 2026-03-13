@@ -40,36 +40,60 @@ export default function ProfileScreen() {
         setLoading(false);
     }
 
+    // ==========================================
+    // FUNGSI PILIH GAMBAR (ANTI-FREEZE APK)
+    // ==========================================
     const pickImage = async () => {
+        // 1. Minta Izin Galeri (Wajib buat APK)
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (status !== 'granted') {
+            Alert.alert('Izin Ditolak', 'Aplikasi butuh akses galeri Bang buat ganti foto.');
+            return;
+        }
+
+        // 2. Launch Galeri
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
+            allowsEditing: false, // <--- UBAH JADI FALSE biar gak macet pas klik "Potong" di APK
             quality: 0.4,
             base64: true,
         });
 
         if (!result.canceled) {
+            // Langsung upload tanpa perlu nunggu layar potong yang error
             uploadAvatar(result.assets[0].base64);
         }
     };
 
     async function uploadAvatar(base64) {
         setUpdating(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        const fileName = `${user.id}_${Date.now()}.jpg`;
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const fileName = `avatar_${user.id}_${Date.now()}.jpg`;
 
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(fileName, decode(base64), { contentType: 'image/jpeg', upsert: true });
+            // Upload ke folder avatars di Supabase Storage
+            const { data, error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, decode(base64), { contentType: 'image/jpeg', upsert: true });
 
-        if (!uploadError) {
+            if (uploadError) throw uploadError;
+
+            // Dapatkan URL publik gambar
             const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+
+            // Update URL ke database profiles
+            const { error: dbError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+
+            if (dbError) throw dbError;
+
             setProfile({ ...profile, avatar_url: publicUrl });
-            Alert.alert("Sukses", "Foto profil berhasil diperbarui!");
+            Alert.alert("Mantap", "Foto profil berhasil diperbarui!");
+        } catch (error) {
+            Alert.alert("Gagal Update", error.message);
+        } finally {
+            setUpdating(false);
         }
-        setUpdating(false);
     }
 
     async function handleUpdateProfile() {
@@ -104,8 +128,8 @@ export default function ProfileScreen() {
             <View style={styles.profileHeader}>
                 <View style={styles.avatarWrapper}>
                     <Image source={{ uri: profile.avatar_url || 'https://i.pravatar.cc/150' }} style={styles.avatarBig} />
-                    <TouchableOpacity style={styles.btnEditAvatar} onPress={pickImage}>
-                        <Ionicons name="camera" size={18} color="#FFF" />
+                    <TouchableOpacity style={styles.btnEditAvatar} onPress={pickImage} disabled={updating}>
+                        {updating ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="camera" size={18} color="#FFF" />}
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.userName}>{profile.full_name || 'Strategist'}</Text>
@@ -160,14 +184,6 @@ export default function ProfileScreen() {
             {/* SETTINGS LIST */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Sistem</Text>
-{/* 
-                <TouchableOpacity style={styles.menuItem}>
-                    <View style={[styles.menuIcon, { backgroundColor: '#EEF2FF' }]}>
-                        <Ionicons name="shield-checkmark" size={20} color="#6366F1" />
-                    </View>
-                    <Text style={styles.menuText}>Privasi & Keamanan</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-                </TouchableOpacity> */}
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
                     <View style={[styles.menuIcon, { backgroundColor: '#FEF2F2' }]}>

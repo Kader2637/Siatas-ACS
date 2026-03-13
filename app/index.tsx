@@ -2,7 +2,7 @@ import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { supabase } from '../supabase';
 
 export default function AuthScreen() {
@@ -41,14 +41,27 @@ export default function AuthScreen() {
         setLoading(false);
     }
 
+    // ==========================================
+    // BAGIAN MINTA IZIN & PILIH GAMBAR (FIXED)
+    // ==========================================
     const pickAvatar = async () => {
+        // 1. Baris ini WAJIB ada buat munculin pop-up "Izinkan..." di HP
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (status !== 'granted') {
+            Alert.alert('Izin Ditolak', 'Bang, izinkan akses galeri di setelan HP biar bisa pilih foto.');
+            return;
+        }
+
+        // 2. Buka Galeri
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
+            allowsEditing: false, // <--- DIUBAH JADI FALSE biar APK nggak nge-freeze pas potong gambar
             aspect: [1, 1],
             quality: 0.3,
             base64: true,
         });
+
         if (!result.canceled) {
             setImageUri(result.assets[0].uri);
             setImageBase64(result.assets[0].base64);
@@ -59,7 +72,6 @@ export default function AuthScreen() {
         if (!email || !password || !fullName) return showNotif('Lengkapi semua data penting!');
         setLoading(true);
 
-        // 1. Upload Foto (Jika ada)
         let publicAvatarUrl = null;
         const tempId = Math.random().toString(36).substring(7);
 
@@ -75,8 +87,6 @@ export default function AuthScreen() {
             }
         }
 
-        // 2. DAFTARKAN USER 
-        // Pastikan SQL Trigger "handle_auto_confirm_email" sudah abang RUN di Supabase
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
@@ -95,14 +105,11 @@ export default function AuthScreen() {
             return;
         }
 
-        // 3. SELESAI & ARAHKAN KE LOGIN
-        // Kita tidak langsung replace ke dashboard, tapi minta user login manual
         showNotif('Identitas Berhasil Dibuat! Silakan Masuk.', 'success');
 
         setTimeout(() => {
-            setIsLogin(true); // Pindah ke mode Login
-            setPassword('');  // Kosongkan sandi buat keamanan
-            // Email tidak dikosongkan biar user tinggal isi sandi aja
+            setIsLogin(true);
+            setPassword('');
         }, 2000);
 
         setLoading(false);

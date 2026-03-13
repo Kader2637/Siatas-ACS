@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, usePathname } from 'expo-router'; // Tambah usePathname
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,9 @@ function GlobalHeader() {
   const [profile, setProfile] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  
+  // --- FIX AUTO FETCH DI NAVBAR ---
+  const pathname = usePathname(); // Pantau setiap kali pindah tab/halaman
 
   useEffect(() => {
     async function fetchProfile() {
@@ -21,8 +24,9 @@ function GlobalHeader() {
         setProfile(data);
       }
     }
+    
     fetchProfile();
-  }, []);
+  }, [pathname]); // Akan trigger ulang fungsi ini setiap pindah tab
 
   async function handleLogout() {
     setMenuVisible(false);
