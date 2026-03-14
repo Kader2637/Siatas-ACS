@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, Modal, Platform, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Import Library Kalender
+import DateTimePicker from '@react-native-community/datetimepicker'; 
 import { supabase } from '../../supabase';
 
 export default function LombaScreen() {
@@ -22,9 +22,9 @@ export default function LombaScreen() {
     const [newDesc, setNewDesc] = useState('');
     
     // --- STATE TARGET & PICKER ---
-    const [newTargetDate, setNewTargetDate] = useState(''); // Format: YYYY-MM-DD
-    const [showPicker, setShowPicker] = useState(false); // Kontrol Kalender
-    const [dateValue, setDateValue] = useState(new Date()); // Value untuk Kalender
+    const [newTargetDate, setNewTargetDate] = useState(''); 
+    const [showPicker, setShowPicker] = useState(false); 
+    const [dateValue, setDateValue] = useState(new Date()); 
 
     const [imageUri, setImageUri] = useState(null);
     const [imageBase64, setImageBase64] = useState(null);
@@ -67,7 +67,6 @@ export default function LombaScreen() {
         if (data) setCompetitions(data);
     }
 
-    // --- LOGIKA HITUNG HARI ---
     const getDeadlineStatus = (targetDate) => {
         if (!targetDate) return { text: 'Tanpa Target', color: '#94A3B8' };
 
@@ -84,12 +83,10 @@ export default function LombaScreen() {
         return { text: `${diffDays} hari lagi`, color: '#6366F1' };
     };
 
-    // --- FUNGSI TANGGAL DIPILIH ---
     const onDateChange = (event, selectedDate) => {
         setShowPicker(false);
         if (selectedDate) {
             setDateValue(selectedDate);
-            // Format ke string YYYY-MM-DD untuk database abang
             const formatted = selectedDate.toISOString().split('T')[0];
             setNewTargetDate(formatted);
         }
@@ -319,10 +316,16 @@ export default function LombaScreen() {
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6366F1']} />}
                 ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Ionicons name="layers-outline" size={48} color="#CBD5E1" />
-                        <Text style={styles.emptyTitle}>Project Kosong</Text>
-                        <Text style={styles.emptyDesc}>Tidak ada project dengan status "{filterStatus}" ditemukan.</Text>
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIconWrapper}>
+                            <Ionicons name={filterStatus === 'active' ? "rocket-outline" : "checkmark-done-circle-outline"} size={42} color="#94A3B8" />
+                        </View>
+                        <Text style={styles.emptyTitle}>Belum Ada Project</Text>
+                        <Text style={styles.emptyDesc}>
+                            {filterStatus === 'active' 
+                                ? "Luncurkan project baru Anda sekarang dan mulai kolaborasi bersama tim." 
+                                : "Belum ada project yang ditandai selesai."}
+                        </Text>
                     </View>
                 }
             />
@@ -449,11 +452,8 @@ const styles = StyleSheet.create({
     inputLabel: { fontSize: 12, fontWeight: '800', color: '#475569', marginBottom: 8, textTransform: 'uppercase' },
     input: { backgroundColor: '#F8FAFC', color: '#0F172A', padding: 16, borderRadius: 16, fontSize: 15, borderWidth: 1, borderColor: '#E2E8F0' },
     inputArea: { height: 100, textAlignVertical: 'top' },
-    
-    // --- STYLE BARU UNTUK SELECTOR TANGGAL ---
     dateSelector: { backgroundColor: '#F8FAFC', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' },
     dateTextLabel: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
-
     submitBtn: { backgroundColor: '#6366F1', padding: 18, borderRadius: 16, alignItems: 'center', marginTop: 10 },
     submitBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
     modalOverlayCenter: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
@@ -465,5 +465,11 @@ const styles = StyleSheet.create({
     cancelBtn: { flex: 1, backgroundColor: '#F1F5F9', paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
     cancelBtnText: { color: '#475569', fontWeight: '800', fontSize: 15 },
     confirmDeleteBtn: { flex: 1, backgroundColor: '#EF4444', paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-    confirmDeleteBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 }
+    confirmDeleteBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+
+    // --- STYLE BARU UNTUK EMPTY STATE ELEGANT ---
+    emptyContainer: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 40, alignItems: 'center', marginTop: 20, borderStyle: 'dashed', borderWidth: 2, borderColor: '#E2E8F0' },
+    emptyIconWrapper: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+    emptyTitle: { fontSize: 18, fontWeight: '900', color: '#0F172A', marginBottom: 8 },
+    emptyDesc: { fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 20, paddingHorizontal: 10 }
 });

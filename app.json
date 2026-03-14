@@ -14,7 +14,15 @@
       "package": "com.acs.siasat",
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC"
-      }
+      },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_MEDIA_LOCATION",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -24,9 +32,22 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 250,
           "resizeMode": "contain",
-          "backgroundColor": "#0F172A"
+          "backgroundColor": "#F8FAFC" 
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Izinkan Siasat ACS mengakses galeri untuk memproses foto profil dan dokumen strategi.",
+          "cameraPermission": "Izinkan Siasat ACS menggunakan kamera untuk mengambil foto secara langsung."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9febb3f1-7869-47c3-9ee6-bea670f50fdb"
+      }
+    }
   }
 }

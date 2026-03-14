@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// FIX: Menambahkan "Platform" ke dalam import react-native di bawah ini
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
 import { supabase } from '../../supabase';
 
 export default function DashboardScreen() {
@@ -55,7 +56,7 @@ export default function DashboardScreen() {
         // --- UPDATE LOGIKA STATISTIK ---
         setStats({
           totalProj: projectsData?.length || 0,
-          pendingTasks: tasksData?.filter(t => t.status !== 'done').length || 0, // Tugas yang Belum Dikerjakan
+          pendingTasks: tasksData?.filter(t => t.status !== 'done').length || 0, 
           finishedProj: projectsData?.filter(p => p.status === 'finished').length || 0
         });
       }
@@ -73,7 +74,7 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
         
-        {/* HEADER - Padding dirapatkan */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View>
             <View style={styles.tagLine}>
@@ -87,7 +88,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* STATS GRID - Tengah Menampilkan Tugas Belum Dikerjakan */}
+        {/* STATS GRID */}
         <View style={styles.statsGrid}>
           <View style={[styles.statBox, { borderBottomColor: '#6366F1' }]}>
             <Text style={styles.statVal}>{stats.totalProj}</Text>
@@ -109,23 +110,32 @@ export default function DashboardScreen() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/lomba')}><Text style={styles.linkText}>Eksplor</Text></TouchableOpacity>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-          {recentProjects.map((proj) => {
-            const isFinished = proj.status === 'finished';
-            return (
-              <TouchableOpacity key={proj.id} style={styles.projectCard} onPress={() => router.push({ pathname: '/detail', params: { compId: proj.id, compTitle: proj.title } })}>
-                <Image source={{ uri: proj.image_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500' }} style={styles.projectImg} />
-                <View style={styles.projectInfo}>
-                  <Text style={styles.projectTitle} numberOfLines={1}>{proj.title}</Text>
-                  <View style={styles.statusRow}>
-                    <View style={[styles.dot, { backgroundColor: isFinished ? '#10B981' : '#F59E0B' }]} />
-                    <Text style={styles.statusText}>{isFinished ? 'Selesai' : 'Sedang Berjalan'}</Text>
+        {/* LOGIKA EMPTY STATE PROJECT */}
+        {recentProjects.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+            {recentProjects.map((proj) => {
+              const isFinished = proj.status === 'finished';
+              return (
+                <TouchableOpacity key={proj.id} style={styles.projectCard} onPress={() => router.push({ pathname: '/detail', params: { compId: proj.id, compTitle: proj.title } })}>
+                  <Image source={{ uri: proj.image_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500' }} style={styles.projectImg} />
+                  <View style={styles.projectInfo}>
+                    <Text style={styles.projectTitle} numberOfLines={1}>{proj.title}</Text>
+                    <View style={styles.statusRow}>
+                      <View style={[styles.dot, { backgroundColor: isFinished ? '#10B981' : '#F59E0B' }]} />
+                      <Text style={styles.statusText}>{isFinished ? 'Selesai' : 'Sedang Berjalan'}</Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            )
-          })}
-        </ScrollView>
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconBg}><Ionicons name="rocket-outline" size={28} color="#94A3B8" /></View>
+            <Text style={styles.emptyTitle}>Belum Ada Project</Text>
+            <Text style={styles.emptyDesc}>Luncurkan project pertamamu sekarang.</Text>
+          </View>
+        )}
 
         {/* TASKS SECTION */}
         <View style={styles.sectionHeader}>
@@ -133,20 +143,40 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.taskContainer}>
-          {loading && recentTasks.length === 0 ? <ActivityIndicator color="#6366F1" /> : recentTasks.map((task) => (
-            <View key={task.id} style={styles.taskCard}>
-              <View style={[styles.taskIndicator, { backgroundColor: task.status === 'done' ? '#10B981' : '#6366F1' }]} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.taskName, task.status === 'done' && styles.strike]}>{task.title}</Text>
-                <Text style={styles.taskProject}>{task.competitions?.title || 'General Task'}</Text>
+          {loading && recentTasks.length === 0 ? (
+             <ActivityIndicator color="#6366F1" style={{ marginTop: 20 }} /> 
+          ) : recentTasks.length > 0 ? (
+            recentTasks.map((task) => (
+              <View key={task.id} style={styles.taskCard}>
+                <View style={[styles.taskIndicator, { backgroundColor: task.status === 'done' ? '#10B981' : '#6366F1' }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.taskName, task.status === 'done' && styles.strike]}>{task.title}</Text>
+                  <Text style={styles.taskProject}>{task.competitions?.title || 'General Task'}</Text>
+                </View>
+                <Ionicons name={task.status === 'done' ? "checkmark-circle" : "hourglass-outline"} size={20} color={task.status === 'done' ? "#10B981" : "#CBD5E1"} />
               </View>
-              <Ionicons name={task.status === 'done' ? "checkmark-circle" : "hourglass-outline"} size={20} color={task.status === 'done' ? "#10B981" : "#CBD5E1"} />
+            ))
+          ) : (
+            /* EMPTY STATE TUGAS */
+            <View style={styles.emptyContainerTask}>
+               <Ionicons name="cafe-outline" size={32} color="#CBD5E1" />
+               <Text style={styles.emptyTaskText}>Semua pekerjaan sudah beres. Saatnya ngopi!</Text>
             </View>
-          ))}
+          )}
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* FAB TOMBOL DOMPET (AKUNTANSI) */}
+      <TouchableOpacity 
+        style={styles.fabWallet} 
+        activeOpacity={0.8} 
+        onPress={() => router.push('/akuntansi')}
+      >
+        <Ionicons name="wallet" size={26} color="#FFFFFF" />
+      </TouchableOpacity>
+
     </View>
   );
 }
@@ -159,8 +189,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', 
     alignItems: 'center', 
     paddingHorizontal: 25, 
-    paddingTop: 45, // Dirapatkan dari 60 ke 45
-    marginBottom: 20 // Dirapatkan dari 30 ke 20
+    paddingTop: 45, 
+    marginBottom: 20 
   },
   tagLine: { 
     backgroundColor: '#EEF2FF', 
@@ -168,7 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4, 
     borderRadius: 6, 
     alignSelf: 'flex-start', 
-    marginBottom: 4 // Dirapatkan dari 8 ke 4
+    marginBottom: 4 
   },
   tagText: { fontSize: 10, fontWeight: '900', color: '#6366F1', letterSpacing: 1 },
   welcomeText: { fontSize: 26, fontWeight: '900', color: '#0F172A', lineHeight: 30 },
@@ -194,5 +224,33 @@ const styles = StyleSheet.create({
   taskIndicator: { width: 4, height: 30, borderRadius: 2, marginRight: 15 },
   taskName: { fontSize: 15, fontWeight: '800', color: '#1E293B' },
   taskProject: { fontSize: 11, color: '#94A3B8', fontWeight: '700', marginTop: 2 },
-  strike: { textDecorationLine: 'line-through', color: '#CBD5E1' }
+  strike: { textDecorationLine: 'line-through', color: '#CBD5E1' },
+
+  // --- STYLE UNTUK EMPTY STATE ---
+  emptyContainer: { marginHorizontal: 25, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 25, alignItems: 'center', borderStyle: 'dashed', borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 },
+  emptyIconBg: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  emptyTitle: { fontSize: 15, fontWeight: '800', color: '#475569', marginBottom: 4 },
+  emptyDesc: { fontSize: 12, color: '#94A3B8', textAlign: 'center' },
+  
+  emptyContainerTask: { backgroundColor: '#F8FAFC', borderRadius: 20, padding: 30, alignItems: 'center', marginTop: 5 },
+  emptyTaskText: { fontSize: 13, fontWeight: '600', color: '#94A3B8', marginTop: 10, textAlign: 'center' },
+
+  // --- STYLE FAB DOMPET ---
+  fabWallet: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 110 : 90, // Menyesuaikan biar nggak ketutup navbar
+    right: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F59E0B', // Warna kuning/emas elegan
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    zIndex: 99
+  }
 });
